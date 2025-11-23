@@ -1,47 +1,47 @@
-import Chat from "../models/Chat.js"
+import Chat from "../models/Chat.js";
 
-
-//API Controller for creating a new Chat
+// CREATE CHAT
 export const createChat = async (req, res) => {
-    try {
-        const userId = req.user._id
+  try {
+    const chatData = {
+      userId: req.user._id,
+      messages: [],
+      name: "New Chat",
+      userName: req.user.name,
+    };
 
-        const chatData = {
-            userId,
-            messages: [],
-            name: "New Chat",
-            userName: req.user.name
-        }
+    const chat = await Chat.create(chatData);
 
-        await Chat.create(chatData)
-        res.json({ success: true, message: "Chat created" })
-    } catch (error) {
-        res.json({ success: false, message: error.message });
-    }
-}
+    res.json({
+      success: true,
+      message: "Chat created",
+      chat,   // IMPORTANT: return chat
+    });
+  } catch (error) {
+    res.json({ success: false, message: error.message });
+  }
+};
 
-// API controller for getting Chat
-
+// GET USER CHATS
 export const getChats = async (req, res) => {
-    try {
-        const userId = req.user._id
-        const Chats = await Chat.find({ userId }).sort({ updatedAt: -1 })
-        res.json({ success: true, Chats })
-    } catch (error) {
-        res.json({ success: false, message: error.message });
-    }
-}
+  try {
+    const chats = await Chat.find({ userId: req.user._id }).sort({ updatedAt: -1 });
 
-//API Controller for deleting a Chat
+    res.json({ success: true, chats });
+  } catch (error) {
+    res.json({ success: false, message: error.message });
+  }
+};
+
+// DELETE CHAT
 export const deleteChat = async (req, res) => {
-    try {
-        const userId = req.user._id
-        const {chatId} = req.body
+  try {
+    const { chatId } = req.body;
 
-        await Chat.deleteOne({_id: chatId, userId})
+    await Chat.deleteOne({ _id: chatId, userId: req.user._id });
 
-        res.json({ success: true, message:"Chat Deleted" })
-    } catch (error) {
-        res.json({ success: false, message: error.message });
-    }
-}
+    res.json({ success: true, message: "Chat deleted" });
+  } catch (error) {
+    res.json({ success: false, message: error.message });
+  }
+};

@@ -1,22 +1,23 @@
-import jwt, { decode } from 'jsonwebtoken'
-import User from '../models/User.js';
+import jwt from "jsonwebtoken";
+import User from "../models/User.js";
 
 export const protect = async (req, res, next) => {
-    let token = req.headers.authorization;
+  try {
+    const authHeader = req.headers.authorization || req.headers.Authorization;
 
-    try {
-        const decoded = jwt.verify(token , process.env.JWT_SECRET)
-        const userId = decoded.id;
-
-        const user = await User.findById(userId)
-
-        if(!user){
-            return res.json({success: flase ,message:"Not authorized , user not found"});
-        }
-
-        req.user = user;
-        next()
-    } catch (error) {
-        res.status(401).json({message:"Not authorized,token"})
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return res.status(401).json({ success: false, message: "Not authorized, token missing" });
     }
-}
+
+    const token = authHeader.split(" ")[1]; // Extract actual token
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+    req.user = await User.findById(decoded.id).select("-password");
+
+    next();
+
+  } catch (error) {
+    res.status(401).json({ success: false, message: "Not authorized, token invalid" });
+  }
+};
